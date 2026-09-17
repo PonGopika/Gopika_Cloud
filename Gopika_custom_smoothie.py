@@ -2,6 +2,7 @@
 import streamlit as st
 from snowflake.snowpark.functions import col
 import requests
+import pandas as pd
 
 name_on_order = st.text_input("Name on order:")
 
@@ -19,43 +20,64 @@ st.write(
 cnx = st.connection("snowflake")
 session = cnx.session()
 
-my_dataframe = session.table("smoothies.public.fruit_options").select(col("FRUIT_NAME"))
-
-# st.dataframe(data=my_dataframe, use_container_width=True)
-
-ingredients = st.multiselect(
-  "Choose up to 5 ingredients:",
-  my_dataframe,
+my_dataframe = session.table("smoothies.public.fruit_options").select(
+    col("FRUIT_NAME"),
+    col("SEARCH_ON")
 )
 
-if ingredients:
-  ingredients_string = ""
+# Convert the Snowpark DataFrame to a Pandas DataFrame
+# so we can use the loc function
+pd_df = my_dataframe.to_pandas()
 
-  for fruit_chosen in ingredients:
-    ingredients_string += fruit_chosen + " "
+ingredients_list = st.multiselect(
+    "Choose up to 5 ingredients:",
+    my_dataframe,
+    max_selections=5
+)
 
-    smoothiefroot_response = requests.get(
-      "https://my.smoothiefroot.com/api/fruit/" + fruit_chosen
-    )
+if ingredients_list:
+    ingredients_string = ''
 
-    sf_df = st.dataframe(
-      data=smoothiefroot_response.json(),
-      use_container_width=True
-    )
+    for fruit_chosen in ingredients_list:
+        ingredients_string += fruit_chosen + ' '
 
-  st.write("Your ingredients:")
-  st.text(ingredients_string)
+        search_on = pd_df.loc[
+            pd_df['FRUIT_NAME'] == fruit_chosen,
+            'SEARCH_ON'
+        ].iloc[0]
 
-  my_insert_stmt = """ insert into smoothies.public.orders(ingredients, name_on_order)
-                    values ('""" + ingredients_string + """','""" + name_on_order + """')"""
+        st.write(
+            'The search value for ',
+            fruit_chosen,
+            ' is ',
+            search_on,
+            '.'
+        )
 
-  st.write(my_insert_stmt)
+        st.subheader(fruit_chosen + ' Nutrition Information')
 
-  submit = st.button("Submit Order")
+        fruitvice_response = requests.get(
+            "https://fruitvice.com/api/fruit/" + search_on
+        )
 
-  if submit:
-    session.sql(my_insert_stmt).collect()
-    st.success('Your Smoothie is ordered!', icon="✅")
+        st.dataframe(
+            data=fruitvice_response.json(),
+            use_container_width=True
+        )
+
+    st.write("Your ingredients:")
+    st.text(ingredients_string)
+
+    my_insert_stmt = """ insert into smoothies.public.orders(ingredients, name_on_order)
+                      values ('""" + ingredients_string + """','""" + name_on_order + """')"""
+
+    st.write(my_insert_stmt)
+
+    submit = st.button("Submit Order")
+
+    if submit:
+        session.sql(my_insert_stmt).collect()
+        st.success('Your Smoothie is ordered!', icon="✅")
 
 # Use an interactive slider to get user input
 hifives_val = st.slider(
