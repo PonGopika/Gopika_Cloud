@@ -71,3 +71,13 @@ st.bar_chart(data=queried_data, x="QUARTER", y="HIGH_FIVES")
 
 st.subheader("Underlying data")
 st.dataframe(queried_data, use_container_width=True)
+
+import requests
+
+smoothiefroot_response = requests.get("https://my.smoothiefroot.com/api/fruit/watermelon")
+
+st.text(smoothiefroot_response)
+
+sf_df = smoothiefroot_response.json()
+
+st.dataframe(sf_df)
