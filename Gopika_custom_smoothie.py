@@ -35,7 +35,7 @@ if ingredients:
     ingredients_string += fruit_chosen + " "
 
     smoothiefroot_response = requests.get(
-      "https://my.smoothiefroot.com/api/fruit/" + fruit_chosen
+      "https://my.smoothiefroot.com/api/fruit/" + fruit_chosen.lower()
     )
 
     sf_df = st.dataframe(
