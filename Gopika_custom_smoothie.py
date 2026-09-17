@@ -1,6 +1,7 @@
 # Import python packages
 import streamlit as st
 from snowflake.snowpark.functions import col
+import requests
 
 name_on_order = st.text_input("Name on order:")
 
@@ -31,7 +32,13 @@ if ingredients:
   ingredients_string = ""
 
   for fruit_chosen in ingredients:
-    ingredients_string += fruit_chosen
+    ingredients_string += fruit_chosen + " "
+
+    smoothiefroot_response = requests.get("https://my.smoothiefroot.com/api/fruit/watermelon")
+    sf_df = st.dataframe(
+      data=smoothiefroot_response.json(),
+      use_container_width=True
+    )
 
   st.write("Your ingredients:")
   st.text(ingredients_string)
@@ -71,13 +78,3 @@ st.bar_chart(data=queried_data, x="QUARTER", y="HIGH_FIVES")
 
 st.subheader("Underlying data")
 st.dataframe(queried_data, use_container_width=True)
-
-import requests
-
-smoothiefroot_response = requests.get("https://my.smoothiefroot.com/api/fruit/watermelon")
-
-st.text(smoothiefroot_response)
-
-sf_df = smoothiefroot_response.json()
-
-st.dataframe(sf_df)
