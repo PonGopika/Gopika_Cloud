@@ -57,8 +57,8 @@ if ingredients_list:
         st.subheader(fruit_chosen + ' Nutrition Information')
 
         fruitvice_response = requests.get(
-            "https://fruitvice.com/api/fruit/" + search_on
-        )
+    "https://www.fruityvice.com/api/fruit/" + search_on
+)
 
         st.dataframe(
             data=fruitvice_response.json(),
